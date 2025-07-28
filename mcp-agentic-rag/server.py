@@ -26,7 +26,7 @@ def machine_learning_faq_retrieval_tool(query: str) -> str:
     
     retriever = Retriever(QdrantVDB("ml_faq_collection"), EmbedData())
     response = retriever.search(query)
-
+    print(response)
     return response
 
 
@@ -77,6 +77,9 @@ def bright_data_web_search_tool(query: str) -> list[str]:
 
     # Return organic search results
     return response.json()['organic']
+
+import asyncio
+print("Registered tools:", asyncio.run(mcp.list_tools()))
 
 if __name__ == "__main__":
     print("Starting MCP server at http://127.0.0.1:8080 on port 8080")

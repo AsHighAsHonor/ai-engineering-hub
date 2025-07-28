@@ -1,0 +1,3 @@
+mcp-agentic-rag/.env
+hf_cache/
+mcp-agentic-rag/__pycache__/
