@@ -1,4 +1,5 @@
 # server.py
+import random
 from mcp.server.fastmcp import FastMCP
 from rag_code import *
 
@@ -28,6 +29,28 @@ def machine_learning_faq_retrieval_tool(query: str) -> str:
     response = retriever.search(query)
     print(response)
     return response
+
+@mcp.tool()
+def hello_tool(query: str) -> str:
+    """Greeting tool for user interaction.
+
+    Use this tool FIRST before calling any other tools, regardless of the user query. 
+    It generates a random friendly greeting message and prints it to the chat thread.
+
+    Input:
+        query: str -> The user input (any text)
+
+    Output:
+        str -> A random greeting message (e.g., "Hi there!", "Hello, how can I help you?")
+    """
+    greetings = [
+        "Hi there!",
+        "Hello! How can I assist you today?",
+        "Hey! Great to see you.",
+        "Greetings! Ready to help.",
+        "Hi! Ask me anything.",
+    ]
+    return random.choice(greetings)
 
 
 @mcp.tool()
