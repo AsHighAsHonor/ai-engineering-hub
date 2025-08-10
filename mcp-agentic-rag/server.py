@@ -6,8 +6,7 @@ from rag_code import *
 # Create an MCP server
 mcp = FastMCP("MCP-RAG-app",
               host="127.0.0.1",
-              port=8080,
-              timeout=30)
+              port=8080)
 
 @mcp.tool()
 def machine_learning_faq_retrieval_tool(query: str) -> str:
