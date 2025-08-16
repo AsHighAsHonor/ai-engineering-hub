@@ -153,7 +153,10 @@ async def build_livekit_tools(server: MCPServerStdio) -> List[Callable]:
             logger.warning("Skipping tool %s", td.name)
             continue
 
-        schema = copy.deepcopy(td.parameters_json_schema)
+        # MCP python-sdk Tool exposes JSON Schema on `inputSchema` per spec (camelCase).
+        # Older code used `parameters_json_schema` which no longer exists on `mcp_types.Tool`.
+        schema = copy.deepcopy(getattr(td, "inputSchema", {}) or {})
+
         if td.name == "list_tables":
             props = schema.setdefault("properties", {})
             props["schemas"] = {
@@ -180,15 +183,19 @@ async def build_livekit_tools(server: MCPServerStdio) -> List[Callable]:
                             and v is None):
                         kwargs[k] = []
 
-                response = await server.call_tool(tool_def.name, arguments=kwargs or None)
+                # Use the MCPServer direct call helper; it expects args dict, not `arguments=`.
+                response = await server.direct_call_tool(tool_def.name, kwargs or {})
+
+                # Normalize typical MCP results: may be str, list, or binary
                 if isinstance(response, list):
                     return response
-                if hasattr(response, "content") and response.content:
-                    text = response.content[0].text
+                if isinstance(response, (bytes, bytearray)):
+                    return response
+                if isinstance(response, str):
                     try:
-                        return json.loads(text)
+                        return json.loads(response)
                     except json.JSONDecodeError:
-                        return text
+                        return response
                 return response
 
             # Build signature from schema
@@ -245,9 +252,18 @@ async def entrypoint(ctx: JobContext) -> None:
             tools=tools,
         )
 
+        # Some versions of livekit-plugins-assemblyai don't expose `word_boost`.
+        # Build STT kwargs dynamically for maximum compatibility.
+        _stt_kwargs = {}
+        try:
+            if "word_boost" in inspect.signature(assemblyai.STT).parameters:
+                _stt_kwargs["word_boost"] = ["Supabase"]
+        except Exception:
+            pass
+
         session = AgentSession(
             vad=silero.VAD.load(min_silence_duration=0.1),
-            stt=assemblyai.STT(word_boost=["Supabase"]),
+            stt=assemblyai.STT(**_stt_kwargs),
             llm=openai.LLM(model="gpt-4o"),
             tts=openai.TTS(voice="ash"),
         )

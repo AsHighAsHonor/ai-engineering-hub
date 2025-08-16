@@ -4,3 +4,5 @@ livekit-plugins-openai
 livekit-plugins-silero
 python-dotenv
 pydantic-ai-slim[openai,mcp]
+firecrawl
+supabase
